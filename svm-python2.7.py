@@ -38,9 +38,9 @@ def dRCsv(x_train,x_test,preData,COMPONENT_NUM):
     preData = np.array(preData)
     
     pca = PCA(n_components = COMPONENT_NUM,whiten = True)
-    pca.fit(trainData)
+    pca.fit(trainData)  #训练模型
     
-    
+    #将数据X转换成降维后的数据。当模型训练好后，对于新输入的数据，都可以用transform方法来降维。
     pcaTrainData = pca.transform(trainData)
     pcaTestData = pca.transform(testData)
     pcaPreData = pca.transform(preData)
@@ -57,7 +57,7 @@ def dRCsv(x_train,x_test,preData,COMPONENT_NUM):
 
 def trainModel(trainData,trainLabel):
     print 'Train SVM...'
-    svmClf = SVC(C = 4, kernel = 'rbf') #惩罚参数
+    svmClf = SVC(C = 4, kernel = 'rbf') #惩罚参数C
     svmClf.fit(trainData,trainLabel)
     return svmClf
 
@@ -76,22 +76,32 @@ def analyse_data(dataMat):
     meanRemoved = dataMat - meanVals
     covMat = np.cov(meanRemoved,rowvar = 0)
     
+    
+    #求协方差矩阵特征值，特征解
     eigvals,eigVects = np.linalg.eig(np.mat(covMat))
+    #特征值排序：升序
     eigValInd = np.argsort(eigvals)
     
+    #预设特征值个数
     topNfeat = 100
     
+    #取前topNfeat特征值
     eigValInd = eigValInd[:-(topNfeat+1):-1]
+    
     sum_cov_score = 0
     cov_all_score = float(sum(eigvals))
+    
     for i in range(0,len(eigValInd)):
         line_cov_score = float(eigvals[eigValInd[i]])
         sum_cov_score += line_cov_score
         
-        print '主成分：%s, 方差比：%s%%,累积方差占比：%s%%' % (format(i+1,'2.0f'), format(line_cov_score/cov_all_score * 100, '4.2f'),format(sum_cov_score/cov_all_score*100,'4.1f'))
+        print '主成分：%s, 方差比：%s%%, 累积方差占比：%s%%' % (format(i+1,'2.0f'), format(line_cov_score/cov_all_score * 100, '4.2f'),format(sum_cov_score/cov_all_score*100,'4.1f'))
 
+            
+        
+        
 def getOptimalAccuracy(trainData,trainLabel,preData):
-    x_train,x_test,y_train,y_test = train_test_split(trainData,trainLabel,test_size=0.5)
+    x_train,x_test,y_train,y_test = train_test_split(trainData,trainLabel,test_size=0.1)
     lineLen,featureLen = np.shape(x_test)
     
     minErr = 1
@@ -122,6 +132,9 @@ def getOptimalAccuracy(trainData,trainLabel,preData):
         
         target_names = [str(i) for i in list(set(y_test))]
         print '包含的种类：',target_names
+        
+        
+        #打印分类的精确率，召回率和f1指数
         print classification_report(y_test,optimalLabel,target_names = target_names)
         print '特征数量=%s , 存在最优解：>> \t' % optimalNum,lineLen,int(minSumErr),1-minErr
         return optimalSVMClf, pcaPreDataResult
@@ -193,7 +206,7 @@ def dataVisulization(data, labels):
 
 
 if __name__ == '__main__':
-    trainData, trainLabel, preData = opencsv()
+#     trainData, trainLabel, preData = opencsv()
 #     dataVisulization(trainData, trainLabel)
 
 
@@ -202,8 +215,8 @@ if __name__ == '__main__':
 
     # 分析数据
     analyse_data(trainData)
-    # 加载预测数据集
     
+    # 加载预测数据集    
     pcaPreData,testLabel = preDRSVM()
     dataVisulization(pcaPreData,testLabel)
     
